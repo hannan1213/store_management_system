@@ -9,6 +9,26 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: gos_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      APP_NAME: GOS Store
+      REPOSITORY_MODE: database
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/gos_test?schema=public
+
     steps:
       - uses: actions/checkout@v4
 
@@ -21,12 +41,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Apply migrations
+        run: npx prisma migrate deploy
+
+      - name: Seed database
+        run: npx prisma db seed
+
       - name: Lint
         run: npm run lint
 
       - name: Build
         run: npm run build
-        env:
-          # CI build uses safe defaults; no real secrets required for GOS-001.
-          APP_NAME: "GOS Store"
-          REPOSITORY_MODE: memory

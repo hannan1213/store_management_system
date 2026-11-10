@@ -1,5 +1,7 @@
-import { buttonVariants } from "@/components/ui/button";
+import { Suspense } from "react";
 import Link from "next/link";
+import { connection } from "next/server";
+import { buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -17,6 +19,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import productService from "@/server/services/product-service";
+import { env } from "@/lib/env";
 
 const LAYERS = [
   {
@@ -47,29 +50,18 @@ const currency = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 0,
 });
 
-export default async function HomePage() {
+/**
+ * Live catalogue data. Rendered per request behind a Suspense boundary so the
+ * static shell (header, architecture notes) still prerenders.
+ */
+async function CatalogueSection() {
+  await connection();
+
   const { items, total } = await productService.list({ page: 1, pageSize: 5 });
   const lowStock = items.filter((product) => product.stock <= 5);
 
   return (
-    <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-16">
-      <section className="flex flex-col gap-4">
-        <div className="flex items-center gap-3">
-          <Badge variant="secondary">GOS-001</Badge>
-          <span className="text-muted-foreground text-sm">
-            Project scaffold — Next.js App Router · TypeScript · Tailwind CSS · shadcn/ui
-          </span>
-        </div>
-        <h1 className="text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
-          Store management system
-        </h1>
-        <p className="text-muted-foreground max-w-2xl">
-          The frontend and backend share one codebase: route handlers under <code>/api</code> call
-          validation → service → repository, and server components reuse the same services
-          directly. The table below is served by the product service, no HTTP hop.
-        </p>
-      </section>
-
+    <>
       <section className="mt-10 grid gap-4 sm:grid-cols-3">
         <Card>
           <CardHeader>
@@ -117,7 +109,13 @@ export default async function HomePage() {
                     <TableCell className="text-right">{currency.format(product.price)}</TableCell>
                     <TableCell className="text-right">
                       <Badge
-                        variant={product.stock === 0 ? "destructive" : product.stock <= 5 ? "outline" : "secondary"}
+                        variant={
+                          product.stock === 0
+                            ? "destructive"
+                            : product.stock <= 5
+                              ? "outline"
+                              : "secondary"
+                        }
                       >
                         {product.stock}
                       </Badge>
@@ -129,6 +127,56 @@ export default async function HomePage() {
           </CardContent>
         </Card>
       </section>
+    </>
+  );
+}
+
+function CatalogueSkeleton() {
+  return (
+    <section className="mt-10 grid gap-4 sm:grid-cols-3">
+      {[0, 1, 2].map((index) => (
+        <Card key={index}>
+          <CardHeader>
+            <div className="bg-muted h-6 w-12 animate-pulse rounded" />
+            <div className="bg-muted h-4 w-40 animate-pulse rounded" />
+          </CardHeader>
+        </Card>
+      ))}
+    </section>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-16">
+      <section className="flex flex-col gap-4">
+        <div className="flex items-center gap-3">
+          <Badge variant="secondary">GOS-001</Badge>
+          <span className="text-muted-foreground text-sm">
+            Project scaffold — Next.js App Router · TypeScript · Tailwind CSS · shadcn/ui
+          </span>
+          {env.NODE_ENV !== "production" ? (
+            <Link
+              className="text-sm underline underline-offset-4 hover:text-foreground"
+              href="/dev/database"
+            >
+              Database status
+            </Link>
+          ) : null}
+        </div>
+        <h1 className="text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
+          Store management system
+        </h1>
+        <p className="text-muted-foreground max-w-2xl">
+          The frontend and backend share one codebase: route handlers under <code>/api</code> call
+          validation → service → repository, and server components reuse the same services
+          directly. The table below is served by the product service, no HTTP hop.
+        </p>
+      </section>
+
+      <Suspense fallback={<CatalogueSkeleton />}>
+        <CatalogueSection />
+      </Suspense>
 
       <section className="mt-10">
         <Card>

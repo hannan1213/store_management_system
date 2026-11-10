@@ -9,7 +9,9 @@
 import { AppError } from "@/lib/errors";
 import type { Product, ProductCreateInput, ProductListResult, ProductQuery } from "@/lib/types";
 import { env } from "@/lib/env";
+import { getPrisma } from "@/server/db/prisma";
 import { InMemoryProductRepository } from "@/server/repositories/in-memory-products";
+import { PrismaProductRepository } from "@/server/repositories/prisma-product-repository";
 import type { ProductRepository } from "@/server/repositories/product-repository";
 
 function buildProductRepository(): ProductRepository {
@@ -17,8 +19,7 @@ function buildProductRepository(): ProductRepository {
     case "memory":
       return new InMemoryProductRepository();
     case "database":
-      // Swap in the database-backed implementation once the storage layer lands.
-      throw AppError.internal("The database repository is not implemented yet.");
+      return new PrismaProductRepository(getPrisma());
   }
 }
 

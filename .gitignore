@@ -29,10 +29,17 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+*.log
 
 # env files (can opt-in for committing if needed)
 .env*
 !.env.example
+
+# local postgres cluster (npm run db:up)
+/.pgdata/
+
+# generated Prisma client
+/src/generated/
 
 # vercel
 .vercel

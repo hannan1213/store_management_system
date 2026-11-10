@@ -14,9 +14,9 @@ const envSchema = z
     APP_NAME: z.string().min(1).default("GOS Store"),
     /**
      * `memory` keeps seeded demo data in process memory (no infra needed);
-     * `database` requires DATABASE_URL once a real database layer is wired up.
+     * `database` uses PostgreSQL through Prisma and requires DATABASE_URL.
      */
-    REPOSITORY_MODE: z.enum(["memory", "database"]).default("memory"),
+    REPOSITORY_MODE: z.enum(["memory", "database"]).default("database"),
     DATABASE_URL: z.string().min(1).optional(),
     NEXT_PUBLIC_APP_URL: z.url().optional(),
   })
