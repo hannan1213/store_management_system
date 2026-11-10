@@ -127,6 +127,9 @@ does exactly that.
 - **Validation:** every input crosses a zod schema in `src/server/validation` first.
 - **Storage:** repositories implement an interface. `REPOSITORY_MODE=database` (default)
   uses Prisma; `REPOSITORY_MODE=memory` keeps demo data in process memory.
+- **Database outages:** connection failures become `AppError.unavailable` → HTTP 503
+  (`UNAVAILABLE`). The home page renders a "Catalogue unavailable" card with the
+  `npm run db:up` hint instead of crashing.
 - **Rendering:** Cache Components (`cacheComponents: true`) is on, so there is no
   `export const dynamic`. Request-time data (catalogue, database status) is read inside
   `<Suspense>` boundaries and calls `connection()`; the rest prerenders.

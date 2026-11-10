@@ -10,6 +10,7 @@ export type ErrorCode =
   | "VALIDATION_ERROR"
   | "NOT_FOUND"
   | "CONFLICT"
+  | "UNAVAILABLE"
   | "INTERNAL_ERROR";
 
 export class AppError extends Error {
@@ -44,6 +45,10 @@ export class AppError extends Error {
 
   static conflict(message: string, details?: unknown): AppError {
     return new AppError("CONFLICT", 409, message, { details });
+  }
+
+  static unavailable(message: string, details?: unknown): AppError {
+    return new AppError("UNAVAILABLE", 503, message, { details });
   }
 
   static internal(message = "Unexpected server error"): AppError {

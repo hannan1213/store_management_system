@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/table";
 import productService from "@/server/services/product-service";
 import { env } from "@/lib/env";
+import { AppError } from "@/lib/errors";
 
 const LAYERS = [
   {
@@ -57,7 +58,26 @@ const currency = new Intl.NumberFormat("en-US", {
 async function CatalogueSection() {
   await connection();
 
-  const { items, total } = await productService.list({ page: 1, pageSize: 5 });
+  let result: Awaited<ReturnType<typeof productService.list>>;
+  try {
+    result = await productService.list({ page: 1, pageSize: 5 });
+  } catch (error) {
+    // A stopped database must not crash the page: show a recovery hint instead.
+    if (!(error instanceof AppError)) {
+      console.error("[home] Failed to load the catalogue:", error);
+    }
+    return (
+      <CatalogueUnavailable
+        message={
+          error instanceof AppError
+            ? error.message
+            : "The catalogue could not be loaded."
+        }
+      />
+    );
+  }
+
+  const { items, total } = result;
   const lowStock = items.filter((product) => product.stock <= 5);
 
   return (
@@ -142,6 +162,30 @@ function CatalogueSkeleton() {
           </CardHeader>
         </Card>
       ))}
+    </section>
+  );
+}
+
+function CatalogueUnavailable({ message }: { message: string }) {
+  return (
+    <section className="mt-10">
+      <Card className="border-destructive/40">
+        <CardHeader>
+          <CardTitle>Catalogue unavailable</CardTitle>
+          <CardDescription>
+            Start the local database with <code>npm run db:up</code>, then reload this page.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground text-sm">{message}</p>
+          <Link
+            className={`${buttonVariants({ variant: "outline" })} mt-4 inline-flex`}
+            href="/"
+          >
+            Retry
+          </Link>
+        </CardContent>
+      </Card>
     </section>
   );
 }
