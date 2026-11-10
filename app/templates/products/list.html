@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Products{% endblock %}
+{% block page_title %}Products{% endblock %}
+{% block page_subtitle %}{{ summary.total }} product(s) · stock at cost {{ summary.inventory_value|money }}{% endblock %}
+{% block actions %}
+  <a class="btn btn-primary" href="{{ url_for('products.create') }}">+ New product</a>
+{% endblock %}
+
+{% block content %}
+<section class="card">
+  <form class="toolbar" method="get" action="{{ url_for('products.index') }}">
+    <input type="search" name="q" value="{{ q }}" placeholder="Search by name or SKU…">
+    <select name="category">
+      <option value="">All categories</option>
+      {% for category in categories %}
+        <option value="{{ category.id }}" {{ 'selected' if category_id == category.id }}>{{ category.name }}</option>
+      {% endfor %}
+    </select>
+    <label class="check">
+      <input type="checkbox" name="low" value="1" {{ 'checked' if low_only }}>
+      Low stock only
+    </label>
+    <button class="btn" type="submit">Filter</button>
+    {% if q or category_id or low_only %}
+      <a class="btn btn-ghost" href="{{ url_for('products.index') }}">Reset</a>
+    {% endif %}
+    <span class="muted small">{{ products|length }} shown · {{ summary.low_stock }} low</span>
+  </form>
+
+  {% if products %}
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Product</th>
+        <th>Category</th>
+        <th>Supplier</th>
+        <th class="right">Cost</th>
+        <th class="right">Price</th>
+        <th class="right">Stock</th>
+        <th>Restock</th>
+        <th class="right">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for product in products %}
+      <tr>
+        <td>
+          <a class="link" href="{{ url_for('products.edit', product_id=product.id) }}">{{ product.name }}</a>
+          <div class="muted small">{{ product.sku }}</div>
+        </td>
+        <td>{{ product.category_name or '—' }}</td>
+        <td>{{ product.supplier_name or '—' }}</td>
+        <td class="right">{{ product.cost_price|money }}</td>
+        <td class="right">{{ product.sell_price|money }}</td>
+        <td class="right">
+          {% if product.stock_qty == 0 %}
+            <span class="badge badge-danger">Out</span>
+          {% elif product.stock_qty <= product.reorder_level %}
+            <span class="badge badge-warn">{{ product.stock_qty }} {{ product.unit }}</span>
+          {% else %}
+            <span class="badge badge-ok">{{ product.stock_qty }} {{ product.unit }}</span>
+          {% endif %}
+        </td>
+        <td>
+          <form class="inline" method="post" action="{{ url_for('products.restock', product_id=product.id) }}">
+            <input class="qty-input" type="number" name="qty" min="1" step="1" value="{{ product.reorder_level * 2 }}" style="width:4.5rem">
+            <button class="btn btn-small" type="submit">Add</button>
+          </form>
+        </td>
+        <td class="right actions">
+          <a class="btn btn-small" href="{{ url_for('products.edit', product_id=product.id) }}">Edit</a>
+          <form class="inline" method="post" action="{{ url_for('products.remove', product_id=product.id) }}"
+                data-confirm="Delete {{ product.name }}?">
+            <button class="btn btn-small btn-danger" type="submit">Delete</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+    <p class="empty">No products match these filters.</p>
+  {% endif %}
+</section>
+{% endblock %}

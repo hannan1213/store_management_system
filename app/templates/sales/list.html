@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Sales{% endblock %}
+{% block page_title %}Sales{% endblock %}
+{% block page_subtitle %}{{ totals.count }} invoice(s) · revenue {{ totals.revenue|money }} · average {{ totals.average|money }}{% endblock %}
+{% block actions %}
+  <a class="btn btn-primary" href="{{ url_for('sales.create') }}">+ New sale</a>
+{% endblock %}
+
+{% block content %}
+<section class="card">
+  <form class="toolbar" method="get" action="{{ url_for('sales.index') }}">
+    <input type="search" name="q" value="{{ q }}" placeholder="Search invoice or customer…">
+    <button class="btn" type="submit">Search</button>
+    {% if q %}<a class="btn btn-ghost" href="{{ url_for('sales.index') }}">Clear</a>{% endif %}
+    <span class="muted small">{{ sales|length }} shown</span>
+  </form>
+
+  {% if sales %}
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Invoice</th>
+        <th>Customer</th>
+        <th>Date</th>
+        <th>Payment</th>
+        <th class="right">Units</th>
+        <th class="right">Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for sale in sales %}
+      <tr>
+        <td><a class="link" href="{{ url_for('sales.detail', sale_id=sale.id) }}">{{ sale.invoice_no }}</a></td>
+        <td>{{ sale.customer_name }}</td>
+        <td class="muted">{{ sale.sale_date[:16] }}</td>
+        <td>{{ sale.payment_method }}</td>
+        <td class="right">{{ sale.units }}</td>
+        <td class="right strong">{{ sale.total|money }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+    <p class="empty">No sales recorded yet. <a class="link" href="{{ url_for('sales.create') }}">Create the first sale</a>.</p>
+  {% endif %}
+</section>
+{% endblock %}

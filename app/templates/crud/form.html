@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% set editing = item is not none %}
+{% block title %}{{ 'Edit' if editing else 'New' }} {{ singular|lower }}{% endblock %}
+{% block page_title %}{{ 'Edit' if editing else 'New' }} {{ singular|lower }}{% endblock %}
+{% block page_subtitle %}<a class="link" href="{{ url_for(name ~ '.index') }}">← Back to {{ title|lower }}</a>{% endblock %}
+
+{% block content %}
+<section class="card">
+  <form class="form-grid" method="post">
+    {% for field in fields %}
+    <label class="field {{ 'field-full' if field.type == 'textarea' }}">
+      <span>{{ field.label }}{% if field.required %} <em class="req">*</em>{% endif %}</span>
+
+      {% if field.type == 'textarea' %}
+        <textarea name="{{ field.key }}" rows="3">{{ item[field.key] if editing and item[field.key] is not none else '' }}</textarea>
+
+      {% elif field.type == 'select' %}
+        <select name="{{ field.key }}">
+          <option value="">— none —</option>
+          {% for value, label in field.options %}
+            <option value="{{ value }}" {{ 'selected' if editing and item[field.key] == value }}>{{ label }}</option>
+          {% endfor %}
+        </select>
+
+      {% else %}
+        <input type="{{ field.type }}" name="{{ field.key }}"
+               {% if field.step %}step="{{ field.step }}"{% elif field.type == 'number' %}step="1"{% endif %}
+               value="{{ item[field.key] if editing and item[field.key] is not none else '' }}"
+               {% if field.required %}required{% endif %}>
+      {% endif %}
+    </label>
+    {% endfor %}
+
+    <div class="form-actions field-full">
+      <button class="btn btn-primary" type="submit">{{ 'Save changes' if editing else 'Create ' ~ singular|lower }}</button>
+      <a class="btn btn-ghost" href="{{ url_for(name ~ '.index') }}">Cancel</a>
+    </div>
+  </form>
+</section>
+{% endblock %}

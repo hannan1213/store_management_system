@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block page_subtitle %}A live snapshot of stock, sales and what needs attention.{% endblock %}
+{% block actions %}
+  <a class="btn btn-primary" href="{{ url_for('sales.create') }}">+ New sale</a>
+  <a class="btn" href="{{ url_for('products.create') }}">+ Add product</a>
+{% endblock %}
+
+{% block content %}
+<section class="stat-grid">
+  <article class="stat">
+    <p class="stat-label">Revenue today</p>
+    <p class="stat-value">{{ stats.revenue_today|money }}</p>
+    <p class="stat-hint">{{ stats.sale_count }} sale(s) recorded overall</p>
+  </article>
+  <article class="stat">
+    <p class="stat-label">Revenue this month</p>
+    <p class="stat-value">{{ stats.revenue_month|money }}</p>
+    <p class="stat-hint">Calendar month to date</p>
+  </article>
+  <article class="stat">
+    <p class="stat-label">Stock at cost</p>
+    <p class="stat-value">{{ stats.inventory_value|money }}</p>
+    <p class="stat-hint">{{ stats.product_count }} product(s) in catalogue</p>
+  </article>
+  <article class="stat {{ 'stat-alert' if stats.low_stock_count }}">
+    <p class="stat-label">Needs reordering</p>
+    <p class="stat-value">{{ stats.low_stock_count }}</p>
+    <p class="stat-hint">{{ stats.out_of_stock_count }} already out of stock</p>
+  </article>
+</section>
+
+<div class="split">
+  <section class="card">
+    <div class="card-head">
+      <h2>Recent sales</h2>
+      <a class="link" href="{{ url_for('sales.index') }}">View all</a>
+    </div>
+    {% if recent_sales %}
+    <table class="table">
+      <thead>
+        <tr><th>Invoice</th><th>Customer</th><th>When</th><th class="right">Total</th></tr>
+      </thead>
+      <tbody>
+        {% for sale in recent_sales %}
+        <tr>
+          <td><a class="link" href="{{ url_for('sales.detail', sale_id=sale.id) }}">{{ sale.invoice_no }}</a></td>
+          <td>{{ sale.customer_name }}</td>
+          <td class="muted">{{ sale.sale_date[:16] }}</td>
+          <td class="right strong">{{ sale.total|money }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+      <p class="empty">No sales yet. <a class="link" href="{{ url_for('sales.create') }}">Record the first one</a>.</p>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <h2>Low stock</h2>
+      <a class="link" href="{{ url_for('products.index', low=1) }}">View all</a>
+    </div>
+    {% if low_stock %}
+    <table class="table">
+      <thead>
+        <tr><th>Product</th><th>Stock</th><th>Reorder at</th></tr>
+      </thead>
+      <tbody>
+        {% for product in low_stock %}
+        <tr>
+          <td>
+            <a class="link" href="{{ url_for('products.edit', product_id=product.id) }}">{{ product.name }}</a>
+            <div class="muted small">{{ product.category_name }}</div>
+          </td>
+          <td><span class="badge {{ 'badge-danger' if product.stock_qty == 0 else 'badge-warn' }}">{{ product.stock_qty }} {{ product.unit }}</span></td>
+          <td class="muted">{{ product.reorder_level }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+      <p class="empty">Every product is above its reorder level.</p>
+    {% endif %}
+  </section>
+</div>
+
+<section class="card">
+  <div class="card-head">
+    <h2>Best sellers</h2>
+    <a class="link" href="{{ url_for('reports.index') }}">Open reports</a>
+  </div>
+  {% if top_products %}
+  <table class="table">
+    <thead>
+      <tr><th>Product</th><th class="right">Units sold</th><th class="right">Revenue</th></tr>
+    </thead>
+    <tbody>
+      {% for product in top_products %}
+      <tr>
+        <td>{{ product.product_name }}</td>
+        <td class="right">{{ product.units }}</td>
+        <td class="right strong">{{ product.revenue|money }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+    <p class="empty">No sales captured yet.</p>
+  {% endif %}
+</section>
+{% endblock %}

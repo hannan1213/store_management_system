@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Flask instance data (local SQLite database)
+instance/
+
+# Tooling
+.pytest_cache/
+.coverage
+htmlcov/
+.vscode/
+.idea/
+
+# OS
+Thumbs.db
+.DS_Store
